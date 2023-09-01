@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:wildlife_surveillance/ui/navbar/settings.dart';
 
 import '../camera.dart';
+import 'gallery.dart';
+import 'history.dart';
+import 'homepage.dart';
 
 class navbar extends StatefulWidget {
   const navbar({super.key});
@@ -14,16 +17,10 @@ class _navbarState extends State<navbar> {
   int _selectedIndex = 0;
   static const TextStyle optionStyle =
       TextStyle(fontSize: 30, fontWeight: FontWeight.bold);
-  static const List<Widget> _widgetOptions = <Widget>[
-    camerashutter(),
-    Text(
-      'Index 1: Business',
-      style: optionStyle,
-    ),
-    Text(
-      'Index 2: School',
-      style: optionStyle,
-    ),
+  static  List<Widget> _widgetOptions = <Widget>[
+    HomePage(),
+    GalleryPage(),
+    ActivityMonitoringPage(),
     settings(),
   ];
 
