@@ -24,7 +24,7 @@ class _settingsState extends State<settings> {
             children: [
             Text("Settings",style: TextStyle(color: Colors.black,fontSize: 40,fontWeight: FontWeight.w600,fontFamily: 'PT Sans'),),
             SizedBox(height: 15,),
-            Container(decoration: BoxDecoration(color: Color.fromARGB(237, 255, 136, 0),borderRadius: BorderRadius.circular(12)),
+            Container(decoration: BoxDecoration(color: Color.fromARGB(188, 255, 136, 0),borderRadius: BorderRadius.circular(12)),
                 width: double.infinity,
                 height: 150,
                 child: Padding(

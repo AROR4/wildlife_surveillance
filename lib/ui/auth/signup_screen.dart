@@ -1,9 +1,14 @@
 
 
+import 'dart:math';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:firebase_database/firebase_database.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
 import 'package:wildlife_surveillance/ui/auth/login_screen.dart';
 import 'package:wildlife_surveillance/ui/navbar/navbar.dart';
 
@@ -18,6 +23,7 @@ class sign_upscreen extends StatefulWidget {
 }
 
 class _sign_upscreenState extends State<sign_upscreen> {
+
   bool loading=false;
   final _FormKey=GlobalKey<FormState>();
   final TextEditingController firstnamecontroller=TextEditingController();
@@ -25,15 +31,30 @@ class _sign_upscreenState extends State<sign_upscreen> {
   final TextEditingController emailcontroller= TextEditingController();
   final TextEditingController passwordcontroller=TextEditingController();
   final _auth=FirebaseAuth.instance;
-
+  final FirebaseFirestore _firestore=FirebaseFirestore.instance;
+  final databaseref= FirebaseDatabase.instance.ref('Users');
+  
   void signup(){
+    Random random = Random();
+
     setState(() {
       loading=true;
     });
-    _auth.createUserWithEmailAndPassword(email: emailcontroller.text.toString(), password: passwordcontroller.text.toString()).then((value){
+    _auth.createUserWithEmailAndPassword(email: emailcontroller.text.toString(), password: passwordcontroller.text.toString()).then((value) async {
       setState(() {
         loading=false;
       });
+      int randomnumber=random.nextInt(1000);
+      await _firestore.collection('users').doc(_auth.currentUser!.uid).set(
+      {
+        'First Name' : firstnamecontroller.text.toString(),
+        'Last Name' : lastnamecontroller.text.toString(),
+        'photos': [],
+        'id': randomnumber.toString()
+      } 
+
+      
+      );
       Navigator.push(context,MaterialPageRoute(builder: (context)=> navbar()));
     }).onError((error, stackTrace){
       setState(() {
@@ -85,7 +106,6 @@ class _sign_upscreenState extends State<sign_upscreen> {
                             SizedBox(height: 30,),
                             TextFormField(
                               controller: firstnamecontroller,
-                              obscureText: true,
                               validator: (value){
                                   if(value!.isEmpty){
                                     return "Enter First Name";
@@ -105,7 +125,6 @@ class _sign_upscreenState extends State<sign_upscreen> {
                               SizedBox(height: 25,),
                               TextFormField(
                               controller: lastnamecontroller,
-                              obscureText: true,
                               validator: (value){
                                   if(value!.isEmpty){
                                     return "Enter Last Name";

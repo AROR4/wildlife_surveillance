@@ -1,8 +1,8 @@
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:image_picker/image_picker.dart';
-import 'dart:io';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart';
+import 'package:flutter/cupertino.dart';import 'package:flutter/material.dart';
+
 import 'package:velocity_x/velocity_x.dart';
 
 class GalleryPage extends StatefulWidget {
@@ -13,197 +13,113 @@ class GalleryPage extends StatefulWidget {
 }
 
 class _GalleryPageState extends State<GalleryPage> {
-  List<String> photos = [];
+  String? userId='';
+   
+  final _auth=FirebaseAuth.instance.currentUser;
+  late Stream<DocumentSnapshot<Map<String, dynamic>>> DocRef;
 
+  late DatabaseReference databaseref;
+  late DatabaseReference dataref;
+  fetchUser() {
+  userId = _auth?.uid;
+  DocRef=FirebaseFirestore.instance.collection('users').doc(userId.toString()).snapshots();
+  }
+  
+  
+
+
+
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    fetchUser();
+    super.initState();
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomAppBar(photos: photos, deleteAllPhotos: deleteAllPhotos),
-      body: Center(
-        child: photos.isNotEmpty
-            ? GridView.builder(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  mainAxisSpacing: 25.0,
-                  crossAxisSpacing: 10.0,
-                ),
-                itemCount: photos.length,
-                itemBuilder: (context, index) {
-                  return GestureDetector(
-                    onLongPress: () {
-                      _showDeleteConfirmationDialog(index);
-                    },
-                    child: Image.file(File(photos[index])),
-                    //child: Image.network(photos[index]),
-                  );
-                },
-              ).px12()
-            : "Gallery is empty".text.size(25).make(),
-      ).py64(),
-      
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          await captureAndSaveImage();
-        },
-        child: Icon(Icons.camera_alt),
-      ),
-    );
-  }
-
-Future<void> savePhotoLocally(String fileName, List<int> imageBytes) async {
-    try {
-      final directory = await getApplicationDocumentsDirectory();
-      final file = File('${directory.path}/$fileName');
-      await file.writeAsBytes(imageBytes);
-      setState(() {
-        photos.add(file.path);
-      });
-      print('Photo saved locally: ${file.path}');
-    } catch (e) {
-      print('Error saving photo: $e');
-    }
-  }
-
-  Future<void> captureAndSaveImage() async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.camera);
-
-    if (pickedFile != null) {
-      final imageBytes = File(pickedFile.path).readAsBytesSync();
-      final fileName = 'photo_${DateTime.now().millisecondsSinceEpoch}.jpg';
-      await savePhotoLocally(fileName, imageBytes);
-    }
-  }
-
-  void _showDeleteConfirmationDialog(int index) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Delete Photo'),
-          content: Text('Are you sure you want to delete this photo?'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(); // Close the dialog
-              },
-              child: Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () {
-                deletePhoto(index); // Delete the photo
-                Navigator.of(context).pop(); // Close the dialog
-              },
-              child: Text('Delete'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void deletePhoto(int index) {
-    setState(() {
-      File photoFile = File(photos[index]);
-      if (photoFile.existsSync()) {
-        photoFile.deleteSync();
-      }
-      photos.removeAt(index);
-    });
-  }
-
-  void deleteAllPhotos() {
-    _showDeleteAllConfirmationDialog();
-  }
-
-  void _showDeleteAllConfirmationDialog() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Delete All Photos'),
-          content: Text('Are you sure you want to delete all photos?'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(); // Close the dialog
-              },
-              child: Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () {
-                _deleteAllPhotos(); // Delete all photos
-                Navigator.of(context).pop(); // Close the dialog
-              },
-              child: Text('Delete All'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _deleteAllPhotos() {
-    setState(() {
-      for (String filePath in photos) {
-        File photoFile = File(filePath);
-        if (photoFile.existsSync()) {
-          photoFile.deleteSync();
-        }
-      }
-      photos.clear();
-    });
-  }
-}
-
-class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
-  final List<String> photos;
-  final Function() deleteAllPhotos;
-
-  CustomAppBar({
-    required this.photos,
-    required this.deleteAllPhotos,
-  });
-
-  @override
-  Size get preferredSize => const Size.fromHeight(70);
-
-  @override
-  Widget build(BuildContext context) {
-    return AppBar(
-      centerTitle: true,
-      backgroundColor: Colors.transparent,
-      automaticallyImplyLeading: false,
-      elevation: 0.0,
-      title: "Gallery".text.color(Colors.black).size(24).make(),
-      actions: [
-        PopupMenuButton<String>(
-          onSelected: (value) {
-            if (value == 'deleteAll') {
-              deleteAllPhotos(); // Call the deleteAllPhotos function
-            }
-          },
-          itemBuilder: (BuildContext context) {
-            return [
-              PopupMenuItem(
-                value: 'deleteAll', // Use a unique value
-                child: Text('Delete All Photos'),
-              ),
-            ];
-          },
-          icon: Icon(
-            Icons.more_vert,
-            color: Colors.black,
-          ),
+  appBar: AppBar(
+    title: Center(
+      child: Text(
+        "Gallery",
+        style: TextStyle(
+          fontFamily: "PT Sans",
+          fontWeight: FontWeight.w500,
+          fontSize: 30,
         ),
-      ],
-      flexibleSpace: Container(
-        height: 144,
-        width: MediaQuery.of(context).size.width,
-        decoration: const BoxDecoration(
-            color: Color.fromARGB(255, 255, 136, 0),
-            borderRadius: BorderRadius.vertical(bottom: Radius.circular(24.0))),
       ),
-    );
-  }
+    ),
+    backgroundColor: Color.fromARGB(188, 255, 136, 0),
+    automaticallyImplyLeading: false,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(
+        bottom: Radius.circular(30),
+      ),
+    ),
+  ),
+  backgroundColor: Color.fromARGB(255, 240, 240, 240),
+  body: StreamBuilder<DocumentSnapshot>(
+    stream: DocRef,
+    builder: (context, AsyncSnapshot<DocumentSnapshot> snapshot) {
+      if (snapshot.connectionState == ConnectionState.waiting) {
+        return Center(child: CircularProgressIndicator());
+      } else if (!snapshot.hasData || !snapshot.data!.exists) {
+        // Handle the case where the document doesn't exist or is empty
+        return Center(child: Text("Gallery is empty", style: TextStyle(fontSize: 25)));
+      } else {
+        final photos = snapshot.data!.get('photos') as List<dynamic>;
+        List<String> urls=[];
+         for (var item in photos) {
+                              urls.add(item);
+                            }
+        
+        return Center(
+          child: urls.isNotEmpty
+              ? GridView.builder(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    mainAxisSpacing: 25.0,
+                    crossAxisSpacing: 10.0,
+                  ),
+                  itemCount: urls.length,
+                  itemBuilder: (context, index) {
+                    String fieldValue = urls[index];
+                    return GestureDetector(
+                      onLongPress: () {
+                        // Handle long press actions if needed
+                      },
+                      child: Padding(
+                        padding: index % 2 == 0 ? const EdgeInsets.only(left: 20, right: 12) : const EdgeInsets.only(right: 20, left: 12),
+                        child: Container(
+                          child: Image.network(
+                            fieldValue,
+                            fit: BoxFit.cover,
+                            loadingBuilder: (context, child, loadingProgress) {
+                              if (loadingProgress == null) {
+                                return child;
+                              } else {
+                                return Center(
+                                  child: CircularProgressIndicator(
+                                    value: loadingProgress.expectedTotalBytes != null
+                                        ? loadingProgress.cumulativeBytesLoaded /
+                                            loadingProgress.expectedTotalBytes!
+                                        : null,
+                                  ),
+                                );
+                              }
+                            },
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                )
+              : Center(child: Text("Gallery is empty", style: TextStyle(fontSize: 25))),
+        ).py64();
+      }
+    },
+  ),
+);
+  } 
 }

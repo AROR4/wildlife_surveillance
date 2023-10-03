@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:wildlife_surveillance/ui/navbar/settings.dart';
-
-import '../camera.dart';
 import 'gallery.dart';
 import 'history.dart';
 import 'homepage.dart';
@@ -15,8 +13,6 @@ class navbar extends StatefulWidget {
 
 class _navbarState extends State<navbar> {
   int _selectedIndex = 0;
-  static const TextStyle optionStyle =
-      TextStyle(fontSize: 30, fontWeight: FontWeight.bold);
   static  List<Widget> _widgetOptions = <Widget>[
     HomePage(),
     GalleryPage(),

@@ -30,8 +30,6 @@ class _ActivityMonitoringPageState extends State<ActivityMonitoringPage> {
       ),
       body: Column(
         children: [
-          // Some widgets related to your activity monitoring display
-          // ...
 
           if (activityDetails.isNotEmpty)
             Expanded(
@@ -67,6 +65,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return AppBar(
+      
       centerTitle: true,
       backgroundColor: Colors.transparent,
       elevation: 0.0,
