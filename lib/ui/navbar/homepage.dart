@@ -1,5 +1,9 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:velocity_x/velocity_x.dart';
 import 'package:wildlife_surveillance/ui/camera.dart';
@@ -15,6 +19,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   final _auth=FirebaseAuth.instance.currentUser;
   final FirebaseFirestore _firestore=FirebaseFirestore.instance;
+  final FirebaseDatabase _database=FirebaseDatabase.instance;
 
   
   String firstName='';
@@ -63,10 +68,33 @@ class _HomePageState extends State<HomePage> {
                                 padding: const EdgeInsets.symmetric(horizontal: 12,vertical: 0),
                                 child: Row(
                                     children: [
-                                       CircleAvatar(
-                                        radius: 50,
-                                        backgroundImage: NetworkImage('https://images.unsplash.com/photo-1618588507085-c79565432917?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8YmVhdXRpZnVsJTIwbmF0dXJlfGVufDB8fDB8fHww&w=1000&q=80'),),
-                                        
+                                       StreamBuilder<DatabaseEvent>(
+                                         stream: _database.ref('workerInfo').onValue,
+                                         builder: (context, snapshot) {
+                                           if (snapshot.hasData) {
+                                          DataSnapshot data = snapshot.data!.snapshot;
+      Map<dynamic, dynamic>? values = data.value as Map<dynamic, dynamic>?;
+
+                                          // final data = snapshot.data;
+                                          // Map<dynamic, dynamic> values = data?.value ;
+
+                                          if (values != null) {
+                                            // Decode the base64 data into bytes
+                                            String base64Image = values['count'];
+                                            Uint8List imageBytes = base64Decode(base64Image);
+
+                                            // Use the decoded bytes to display the image
+                                            return CircleAvatar(
+                                              radius: 70,
+                                              backgroundImage: Image.memory(imageBytes).image,
+                                            );
+                                          }
+                                        }
+
+                                        // Return a placeholder or loading indicator if data is not available
+                                        return CircularProgressIndicator();
+                                         }
+                                       ),
                                       
                                       SizedBox(width: 20),
                                       Padding(

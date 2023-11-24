@@ -1,14 +1,18 @@
 
 import 'dart:io';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:random_string/random_string.dart';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'dart:math' as math;
 import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
 import 'package:image_picker/image_picker.dart';
+import 'package:webview_flutter/webview_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../utils/utils.dart';
 
@@ -24,6 +28,7 @@ class _camerashutterState extends State<camerashutter> {
  File? _image;
 String? userId='';
 final _auth=FirebaseAuth.instance.currentUser;
+final FirebaseDatabase _firebaseDatabase=FirebaseDatabase.instance;
 final FirebaseFirestore _firestore=FirebaseFirestore.instance;
 fetchUser() {
   userId = _auth?.uid;
@@ -113,6 +118,7 @@ void getsource(){
     
   }
 
+final dbr=FirebaseDatabase.instance.reference();
 
   
 
@@ -136,7 +142,17 @@ void getsource(){
               Text("LIVE",style: TextStyle(fontSize: 23,fontFamily: 'PT Sans',color: Color.fromARGB(255, 248, 28, 28)),textAlign: TextAlign.center ,),
               SizedBox(height: 15,),
               Container(decoration: BoxDecoration(borderRadius: BorderRadius.circular(12),color: Colors.white12),height: 300,
-              child: Placeholder(),),
+             child: ElevatedButton(
+            child: Text('See Live Cam'),
+            onPressed: () async {
+              launchUrl(Uri.parse("http://192.168.33.38:8080/browserfs.html"));
+            })
+// child: WebView(
+//               initialUrl: "http://192.168.208.177/", // Use your live stream URL here
+//               javascriptMode: JavascriptMode.unrestricted, // Allow JavaScript
+//               initialMediaPlaybackPolicy: AutoMediaPlaybackPolicy.always_allow,
+// )
+),
               SizedBox(height: 40,),
               Container(
                 child:  loading? CircularProgressIndicator() :  Stack(
@@ -149,7 +165,11 @@ void getsource(){
                    child: Column(
                      children: [
                       SizedBox(width: 150,),
-                      IconButton(onPressed: (){}, icon: Icon(Icons.arrow_back_ios_new_rounded,color: Colors.white,size: 30,) ),
+                      IconButton(onPressed: (){
+                        _controlServos('servo_forward1');
+                      //  _controlServos('servo_backward1');
+
+                      }, icon: Icon(Icons.arrow_back_ios_new_rounded,color: Colors.white,size: 30,) ),
                       
                      ],
                    ),
@@ -158,7 +178,9 @@ void getsource(){
                     alignment: AlignmentDirectional.centerEnd,
                    child: Column(
                      children: [
-                      IconButton(onPressed: (){}, icon: Transform.rotate(
+                      IconButton(onPressed: (){
+                        _controlServos('servo_forward2');
+                      }, icon: Transform.rotate(
                         angle: -math.pi ,
                         child: Icon(Icons.arrow_back_ios_new_rounded,color: Colors.white,size: 30,)
                       ),),
@@ -170,7 +192,10 @@ void getsource(){
                     alignment: AlignmentDirectional.topCenter,
                    child: Column(
                      children: [
-                      IconButton(onPressed: (){}, icon: Transform.rotate(
+                      IconButton(onPressed: (){
+
+                       _controlServos('servo_backward1');
+                      }, icon: Transform.rotate(
                         angle: math.pi/2 ,
                         child: Icon(Icons.arrow_back_ios_new_rounded,color: Colors.white,size: 30,)
                       ),),
@@ -182,8 +207,8 @@ void getsource(){
                   CircleAvatar(backgroundColor: Colors.white,radius: 70,),
                   IconButton(
                     onPressed: ()async{
-                      
-                      getsource();
+                      _controlServos('click_photo');
+                      // getsource();
                     },
                     icon: Icon(Icons.camera,size: 60),
                     ),
@@ -192,7 +217,9 @@ void getsource(){
                    child: Column(
                      children: [
                       SizedBox(height: 210,),
-                      IconButton(onPressed: (){}, icon: Transform.rotate(
+                      IconButton(onPressed: (){
+                        _controlServos('servo_backward2');
+                      }, icon: Transform.rotate(
                         angle: -math.pi/2 ,
                         child: Icon(Icons.arrow_back_ios_new_rounded,color: Colors.white,size: 30,)
                       ),),
@@ -207,6 +234,25 @@ void getsource(){
         ),
       ),
     );
+
+
+    
+  }
+  Future<void> _controlServos(String command) async {
+  final Uri uri = Uri.http('192.168.1.1:80', '/' + command); // Change the IP address and path as needed
+  try {
+    final response = await http.get(uri);
+    if (response.statusCode == 200) {
+      print('Command sent successfully');
+    } else {
+      print('Failed to send command');
+    }
+  } catch (e) {
+    print('Error: $e');
   }
 }
+
+}
+
+
 
